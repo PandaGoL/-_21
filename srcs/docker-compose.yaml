@@ -1,0 +1,60 @@
+version: "3.9"
+services:
+  mysql:
+    image: mariadb
+    env_file: .env
+    volumes:
+     - db: /var/lib/mysql
+    restart: always
+    build: requirements/mariadb/
+    networks:
+      - incnet
+    container_name: mariadb
+  nginx:
+    image: nginx
+    volums:
+     - wp:/var/www/html
+    depends_on:
+     - wp
+    ports:
+     - "443:443"
+    env_file: .env
+    restart: always
+    build: requirements/nginx/
+    networks:
+      - incnet
+    container_name: nginx
+  wp:
+    image: wordpress
+    env_file: .env
+    depends_on:
+      - mysql
+    volumes:
+      - wp:/var/www/html
+    restart: always
+    build: requirements/wp/
+    networks:
+      - incnet
+    container_name: wordpress
+volumes:
+  wp:
+    driver: local
+    name: wordpress
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/cjothos/data/wp
+  dp:
+    driver: local
+    name: db
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/cjothos/data/db
+
+network:
+  incnet:
+    name: incnet
+    driver: bridge
+
+
