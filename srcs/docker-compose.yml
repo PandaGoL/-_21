@@ -1,0 +1,113 @@
+version: "3"
+
+services:
+    nginx:
+        depends_on:
+            - wordpress
+        build: requirements/nginx
+        container_name: nginx
+        volumes:
+            - web_data:/var/www/html
+        networks:
+            - inc
+        ports:
+            - "443:443"
+        restart: always
+    wordpress:
+        depends_on:
+            - mariadb
+        build: requirements/wordpress
+        container_name: wordpress
+        volumes:
+            - web_data:/var/www/html
+        networks:
+            - inc
+        environment:
+            DOMAIN_NAME: ${DOMAIN_NAME}
+            MYSQL_HOST: ${MYSQL_HOST}
+            WP_DB_NAME: ${WP_DB_NAME}
+            WP_DB_USER: ${WP_DB_USER}
+            WP_DB_PASSWORD: ${WP_DB_PASSWORD}
+            WP_TITLE: ${WP_TITLE}
+            WP_ADMIN_USER: ${WP_ADMIN_USER}
+            WP_ADMIN_PASSWORD: ${WP_ADMIN_PASSWORD}
+            WP_ADMIN_EMAIL: ${WP_ADMIN_EMAIL}
+            WP_USER: ${WP_USER}
+            WP_PASSWORD: ${WP_PASSWORD}
+            WP_EMAIL: ${WP_EMAIL}
+            REDIS_HOST: ${REDIS_HOST}
+            REDIS_PASSWORD: ${REDIS_PASSWORD}
+    mariadb:
+        build: requirements/mariadb
+        container_name: mariadb
+        volumes:
+            - db_data:/var/lib/mysql
+        networks:
+            - inc
+        restart: always
+        environment:
+            MYSQL_HOST: ${MYSQL_HOST}
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            WP_DB_NAME: ${WP_DB_NAME}
+            WP_DB_USER: ${WP_DB_USER}
+            WP_DB_PASSWORD: ${WP_DB_PASSWORD}
+    ftp:
+        build: requirements/bonus/ftp
+        container_name: ftp
+        volumes:
+            - web_data:/var/www/html
+        ports:
+            - "21:21"
+        networks:
+            - inc
+        restart: always
+        environment:
+            FTP_USER: ${FTP_USER}
+            FTP_PASSWORD: ${FTP_PASSWORD}
+    redis:
+        build: requirements/bonus/redis
+        container_name: redis
+        networks:
+            - inc
+        restart: always
+        environment:
+            REDIS_HOST: ${REDIS_HOST}
+            REDIS_PASSWORD: ${REDIS_PASSWORD}
+    adminer:
+        build: requirements/bonus/adminer
+        container_name: adminer
+        volumes:
+            - web_data:/var/www/html
+        restart: on-failure
+    static-website:
+        build: requirements/bonus/static-website
+        container_name: static-website
+        ports: 
+            - "3000:3000"
+        restart: on-failure
+    phpmyadmin:
+        build: requirements/bonus/phpmyadmin
+        container_name: phpmyadmin
+        volumes:
+            - web_data:/var/www/html
+        restart: on-failure
+        environment:
+            MYSQL_HOST: ${MYSQL_HOST}
+volumes:
+    db_data:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ${HOME}/data/db
+    web_data:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ${HOME}/data/wp
+networks:
+    inc:
+        name: inc
+        driver: bridge
+    

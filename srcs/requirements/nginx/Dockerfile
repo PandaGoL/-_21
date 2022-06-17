@@ -1,9 +1,17 @@
-FROM debian:buster
-RUN apt-get  update
-RUN apt-get  upgrade
-RUN apt-get  install -y openssl php-gd php-xml nano nginx
-EXPOSE 443
-COPY ./conf/ var/www/
-# RUN chmod +x /var/www/nginx.sh
-# ENTRYPOINT ["/var/www/nginx.sh"]
+FROM alpine:3.14
+
+RUN apk update && apk upgrade && apk add --no-cache \
+	nginx openssl
+
+# open ssl certificate
+RUN mkdir /etc/nginx/ssl
+RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 -sha256 \
+	-keyout /etc/nginx/ssl/openssl.key \
+	-out /etc/nginx/ssl/openssl.crt \
+	-subj "/C=RU/ST=Moscow/L=Moscow/O=42/OU=IT/CN=cjothos.42.fr/"
+
+# nginx
+RUN mkdir -p /run/nginx
+COPY ./conf/nginx.conf /etc/nginx/nginx.conf
+
 CMD ["nginx", "-g", "daemon off;"]
